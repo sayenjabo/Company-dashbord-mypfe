@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { Loader2, Sparkles } from "lucide-react";
@@ -9,37 +9,31 @@ import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 
 export const Route = createFileRoute("/login")({
-  head: () => ({
-    meta: [
-      { title: "Sign in — Tynass Company Dashboard" },
-      { name: "description", content: "Sign in to manage your VR training program." },
-    ],
-  }),
   component: LoginPage,
 });
 
 function LoginPage() {
-  const { login, company, loading } = useAuth();
+  const { login, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [submitting, setSubmitting] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    if (!loading && company) navigate({ to: "/dashboard", replace: true });
-  }, [loading, company, navigate]);
+  if (isAuthenticated) {
+    navigate({ to: "/dashboard", replace: true });
+    return null;
+  }
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setSubmitting(true);
+    setLoading(true);
     try {
       await login(email, password);
-      toast.success("Welcome back");
       navigate({ to: "/dashboard", replace: true });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Login failed");
     } finally {
-      setSubmitting(false);
+      setLoading(false);
     }
   }
 
@@ -47,13 +41,12 @@ function LoginPage() {
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background px-4">
       <div className="pointer-events-none absolute inset-0 opacity-70">
         <div className="absolute -top-32 -left-32 h-96 w-96 rounded-full bg-primary/20 blur-3xl" />
-        <div className="absolute -bottom-32 -right-32 h-96 w-96 rounded-full bg-chart-2/20 blur-3xl" />
+        <div className="absolute -bottom-32 -right-32 h-96 w-96 rounded-full bg-primary/10 blur-3xl" />
       </div>
 
       <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
         className="glass-card relative z-10 w-full max-w-md rounded-2xl p-8"
       >
         <div className="mb-8 flex items-center gap-3">
@@ -61,7 +54,7 @@ function LoginPage() {
             <Sparkles className="h-5 w-5" />
           </div>
           <div>
-            <div className="font-display text-xl font-bold">Tynass</div>
+            <div className="text-xl font-bold">Tynass</div>
             <div className="text-xs text-muted-foreground">Company Dashboard</div>
           </div>
         </div>
@@ -96,13 +89,8 @@ function LoginPage() {
               placeholder="••••••••"
             />
           </div>
-          <Button
-            type="submit"
-            disabled={submitting}
-            className="w-full teal-glow"
-            size="lg"
-          >
-            {submitting ? (
+          <Button type="submit" disabled={loading} className="w-full" size="lg">
+            {loading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Signing in…
               </>

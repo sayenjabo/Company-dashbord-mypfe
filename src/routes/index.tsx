@@ -6,7 +6,7 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
-  const { company, loading } = useAuth();
+  const { isAuthenticated, loading } = useAuth();
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
@@ -14,5 +14,5 @@ function Index() {
       </div>
     );
   }
-  return <Navigate to={company ? "/dashboard" : "/login"} replace />;
+  return <Navigate to={isAuthenticated ? "/dashboard" : "/login"} replace />;
 }

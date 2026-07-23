@@ -25,96 +25,36 @@ const nav = [
 ] as const;
 
 function AuthedLayout() {
-  const { company, loading, logout } = useAuth();
+  const { company, isAuthenticated, loading, logout } = useAuth();
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
-    if (!loading && !company) navigate({ to: "/login", replace: true });
-  }, [loading, company, navigate]);
+    if (!loading && !isAuthenticated) navigate({ to: "/login", replace: true });
+  }, [loading, isAuthenticated, navigate]);
 
   useEffect(() => {
     setMobileOpen(false);
   }, [pathname]);
 
-  if (loading || !company) {
+  if (loading || !isAuthenticated) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
       </div>
     );
   }
 
+  const handleLogout = async () => {
+    await logout();
+    navigate({ to: "/login", replace: true });
+  };
+
   return (
     <div className="flex min-h-screen bg-background">
-      {/* Sidebar */}
-      <aside
-        className={cn(
-          "fixed inset-y-0 left-0 z-40 flex flex-col border-r border-sidebar-border bg-sidebar transition-all duration-300 md:static",
-          collapsed ? "md:w-20" : "md:w-64",
-          mobileOpen ? "w-64 translate-x-0" : "-translate-x-full md:translate-x-0",
-        )}
-      >
-        <div className="flex h-16 items-center gap-3 border-b border-sidebar-border px-5">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <Sparkles className="h-5 w-5" />
-          </div>
-          {!collapsed && (
-            <div className="min-w-0">
-              <div className="truncate font-display text-lg font-bold text-sidebar-foreground">
-                Tynass
-              </div>
-              <div className="truncate text-xs text-muted-foreground">
-                {company.companyName || "Company"}
-              </div>
-            </div>
-          )}
-        </div>
-
-        <nav className="flex-1 space-y-1 p-3">
-          {nav.map((item) => {
-            const active =
-              pathname === item.to ||
-              (item.to !== "/dashboard" && pathname.startsWith(item.to));
-            const Icon = item.icon;
-            return (
-              <Link
-                key={item.to}
-                to={item.to}
-                className={cn(
-                  "group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all",
-                  active
-                    ? "bg-primary/15 text-primary"
-                    : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-                )}
-              >
-                <Icon className={cn("h-5 w-5 shrink-0", active && "text-primary")} />
-                {!collapsed && <span className="truncate">{item.label}</span>}
-              </Link>
-            );
-          })}
-        </nav>
-
-        <div className="border-t border-sidebar-border p-3">
-          <Button
-            variant="ghost"
-            onClick={() => {
-              logout();
-              navigate({ to: "/login", replace: true });
-            }}
-            className={cn(
-              "w-full justify-start gap-3 text-sidebar-foreground",
-              collapsed && "justify-center px-0",
-            )}
-          >
-            <LogOut className="h-4 w-4" />
-            {!collapsed && "Sign out"}
-          </Button>
-        </div>
-      </aside>
-
+      {/* Mobile overlay */}
       {mobileOpen && (
         <div
           className="fixed inset-0 z-30 bg-black/50 md:hidden"
@@ -122,9 +62,70 @@ function AuthedLayout() {
         />
       )}
 
+      {/* Sidebar */}
+      <aside
+        className={cn(
+          "fixed inset-y-0 left-0 z-40 flex flex-col border-r border-sidebar-border bg-sidebar transition-all duration-300 md:static",
+          collapsed ? "md:w-20" : "md:w-64",
+          mobileOpen ? "w-64 translate-x-0" : "-translate-x-full md:translate-x-0"
+        )}
+      >
+        {/* Logo */}
+        <div className="flex h-14 items-center border-b border-sidebar-border px-4">
+          <div className="flex items-center gap-2">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+              <Sparkles className="h-4 w-4" />
+            </div>
+            {!collapsed && (
+              <div>
+                <div className="text-sm font-bold text-sidebar-foreground">Tynass</div>
+                <div className="text-xs text-muted-foreground truncate max-w-[140px]">
+                  {company?.companyName || "Company"}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Nav */}
+        <nav className="flex-1 space-y-1 p-2 pt-4">
+          {nav.map(({ to, label, icon: Icon }) => {
+            const active = pathname === to;
+            return (
+              <Link
+                key={to}
+                to={to}
+                className={cn(
+                  "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                  active
+                    ? "bg-sidebar-accent text-primary"
+                    : "text-sidebar-foreground hover:bg-sidebar-accent/50"
+                )}
+              >
+                <Icon className="h-4 w-4 shrink-0" />
+                {!collapsed && <span>{label}</span>}
+              </Link>
+            );
+          })}
+        </nav>
+
+        {/* Footer */}
+        <div className="border-t border-sidebar-border p-2">
+          <button
+            onClick={handleLogout}
+            className={cn(
+              "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-destructive hover:bg-sidebar-accent/50"
+            )}
+          >
+            <LogOut className="h-4 w-4 shrink-0" />
+            {!collapsed && <span>Logout</span>}
+          </button>
+        </div>
+      </aside>
+
       {/* Main */}
-      <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-border/60 bg-background/70 px-4 backdrop-blur md:px-8">
+      <div className="flex flex-1 flex-col min-w-0">
+        <header className="flex h-14 items-center border-b border-border/50 px-4 gap-3">
           <Button
             variant="ghost"
             size="icon"
@@ -136,16 +137,13 @@ function AuthedLayout() {
           <Button
             variant="ghost"
             size="icon"
-            className="hidden md:inline-flex"
-            onClick={() => setCollapsed((v) => !v)}
+            className="hidden md:flex"
+            onClick={() => setCollapsed(!collapsed)}
           >
             <Menu className="h-5 w-5" />
           </Button>
-          <div className="ml-auto text-sm text-muted-foreground">
-            {company.email as string}
-          </div>
         </header>
-        <main className="flex-1 p-4 md:p-8">
+        <main className="flex-1 overflow-auto p-6">
           <Outlet />
         </main>
       </div>
