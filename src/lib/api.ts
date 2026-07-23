@@ -1,8 +1,14 @@
-// Use relative URLs — proxied through Vite dev server to avoid SSR fetch issues
-// In production, VITE_API_URL is used
-const API_BASE = typeof window !== "undefined" && (window as any).__ENV__?.VITE_API_URL
-  ? (window as any).__ENV__.VITE_API_URL
-  : "";
+// In development: API_BASE is empty → Vite proxy forwards /api/* to localhost:3000
+// In production (Vercel): API_BASE is the full backend URL from VITE_API_URL
+const API_BASE = (() => {
+  // Try VITE env variable first (works in production)
+  try {
+    const env = import.meta.env?.VITE_API_URL;
+    if (env) return env;
+  } catch {}
+  // In development, use empty string (Vite proxy handles it)
+  return "";
+})();
 
 export const TOKEN_KEY = "company_token";
 
@@ -44,7 +50,7 @@ class CompanyApiClient {
       headers["Authorization"] = `Bearer ${token}`;
     }
 
-    const url = API_BASE ? `${API_BASE}${endpoint}` : endpoint;
+    const url = `${API_BASE}${endpoint}`;
 
     const res = await fetch(url, {
       ...options,
@@ -168,18 +174,20 @@ class CompanyApiClient {
 
 export const companyApi = new CompanyApiClient();
 
-// Keep old api export for backward compatibility with existing pages
+// Backward compatibility wrapper
 export async function api<T = unknown>(
   path: string,
   init: RequestInit & { json?: unknown } = {},
 ): Promise<T> {
-  return companyApi["request"]<T>(path, {
-    ...init,
-    body: init.json !== undefined ? JSON.stringify(init.json) : init.body,
-    headers: init.json !== undefined
-      ? { "Content-Type": "application/json", ...(init.headers as Record<string, string> || {}) }
-      : init.headers,
-  });
+  const options: RequestInit = { ...init };
+  if (init.json !== undefined) {
+    options.body = JSON.stringify(init.json);
+    options.headers = {
+      "Content-Type": "application/json",
+      ...(init.headers as Record<string, string> || {}),
+    };
+  }
+  return (companyApi as any).request<T>(path, options);
 }
 
 // Domain types
