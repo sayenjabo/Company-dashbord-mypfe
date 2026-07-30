@@ -1,34 +1,38 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import { Link, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { ArrowLeft, Plus, Pencil, Trash2 } from "lucide-react";
-import { companyApi, type Milestone } from "../../lib/api";
-import { PageHeader, GlassCard, EmptyState } from "../../components/dashboard-ui";
-import { Button } from "../../components/ui/button";
-import { Input } from "../../components/ui/input";
-import { Label } from "../../components/ui/label";
-import { Badge } from "../../components/ui/badge";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "../../components/ui/dialog";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "../../components/ui/alert-dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../components/ui/select";
-
-export const Route = createFileRoute("/_authenticated/employees/$id")({
-  component: EmployeeDetail,
-});
+import { companyApi, type Milestone } from "../lib/api";
+import { PageHeader, GlassCard, EmptyState } from "../components/dashboard-ui";
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
+import { Label } from "../components/ui/label";
+import { Badge } from "../components/ui/badge";
+import {
+  Dialog, DialogContent, DialogFooter,
+  DialogHeader, DialogTitle, DialogTrigger,
+} from "../components/ui/dialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel,
+  AlertDialogContent, AlertDialogDescription,
+  AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "../components/ui/alert-dialog";
+import {
+  Select, SelectContent, SelectItem,
+  SelectTrigger, SelectValue,
+} from "../components/ui/select";
 
 function MilestoneForm({
-  initial,
   onSubmit,
   submitting,
   submitLabel,
 }: {
-  initial?: Partial<Milestone>;
   onSubmit: (data: { title: string; type: string; description: string; module: string }) => void;
   submitting: boolean;
   submitLabel: string;
 }) {
-  const [title, setTitle] = useState(initial?.notes ?? "");
+  const [title, setTitle] = useState("");
   const [type, setType] = useState("training");
   const [description, setDescription] = useState("");
   const [module, setModule] = useState("");
@@ -64,19 +68,20 @@ function MilestoneForm({
   );
 }
 
-function EmployeeDetail() {
-  const { id } = Route.useParams();
+export default function EmployeeDetailPage() {
+  const { id } = useParams<{ id: string }>();
   const qc = useQueryClient();
 
   const employees = useQuery({
     queryKey: ["employees"],
     queryFn: () => companyApi.getEmployees(),
   });
-  const employee = employees.data?.find((e: any) => e._id === id || e.id === id);
+  const employee = employees.data?.find((e: any) => e._id === id);
 
   const milestones = useQuery({
     queryKey: ["milestones", id],
-    queryFn: () => companyApi.getMilestones(id),
+    queryFn: () => companyApi.getMilestones(id!),
+    enabled: !!id,
   });
 
   const [createOpen, setCreateOpen] = useState(false);
@@ -84,7 +89,7 @@ function EmployeeDetail() {
   const [deleting, setDeleting] = useState<Milestone | null>(null);
 
   const createMut = useMutation({
-    mutationFn: (payload: any) => companyApi.addMilestone(id, payload),
+    mutationFn: (payload: any) => companyApi.addMilestone(id!, payload),
     onSuccess: () => {
       toast.success("Milestone added");
       qc.invalidateQueries({ queryKey: ["milestones", id] });
@@ -93,19 +98,8 @@ function EmployeeDetail() {
     onError: (e: any) => toast.error(e.message || "Failed"),
   });
 
-  const updateMut = useMutation({
-    mutationFn: ({ milestoneId, payload }: { milestoneId: string; payload: any }) =>
-      companyApi.updateMilestone(id, milestoneId, payload),
-    onSuccess: () => {
-      toast.success("Milestone updated");
-      qc.invalidateQueries({ queryKey: ["milestones", id] });
-      setEditing(null);
-    },
-    onError: (e: any) => toast.error(e.message || "Failed"),
-  });
-
   const deleteMut = useMutation({
-    mutationFn: (milestoneId: string) => companyApi.deleteMilestone(id, milestoneId),
+    mutationFn: (milestoneId: string) => companyApi.deleteMilestone(id!, milestoneId),
     onSuccess: () => {
       toast.success("Milestone removed");
       qc.invalidateQueries({ queryKey: ["milestones", id] });
@@ -124,7 +118,9 @@ function EmployeeDetail() {
 
       <PageHeader
         title={employee?.name || "Employee"}
-        description={employee ? `${employee.jobTitle || "—"} · ${employee.department || "—"} · Code: ${employee.accessCode || "—"}` : "Loading…"}
+        description={employee
+          ? `${employee.jobTitle || "—"} · ${employee.department || "—"} · Code: ${employee.accessCode || "—"}`
+          : "Loading…"}
       />
 
       <div className="mb-4 flex items-center justify-between">
@@ -135,7 +131,11 @@ function EmployeeDetail() {
           </DialogTrigger>
           <DialogContent>
             <DialogHeader><DialogTitle>Add milestone</DialogTitle></DialogHeader>
-            <MilestoneForm onSubmit={(v) => createMut.mutate(v)} submitting={createMut.isPending} submitLabel="Add milestone" />
+            <MilestoneForm
+              onSubmit={(v) => createMut.mutate(v)}
+              submitting={createMut.isPending}
+              submitLabel="Add milestone"
+            />
           </DialogContent>
         </Dialog>
       </div>
@@ -171,20 +171,6 @@ function EmployeeDetail() {
           </div>
         )}
       </GlassCard>
-
-      <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>Edit milestone</DialogTitle></DialogHeader>
-          {editing && (
-            <MilestoneForm
-              initial={editing}
-              onSubmit={(v) => updateMut.mutate({ milestoneId: editing._id, payload: v })}
-              submitting={updateMut.isPending}
-              submitLabel="Save changes"
-            />
-          )}
-        </DialogContent>
-      </Dialog>
 
       <AlertDialog open={!!deleting} onOpenChange={(o) => !o && setDeleting(null)}>
         <AlertDialogContent>

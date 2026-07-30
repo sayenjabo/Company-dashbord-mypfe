@@ -1,20 +1,23 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { Plus, Pencil, Trash2, ArrowRight } from "lucide-react";
-import { companyApi, type Employee } from "../../lib/api";
-import { PageHeader, GlassCard, EmptyState } from "../../components/dashboard-ui";
-import { Button } from "../../components/ui/button";
-import { Input } from "../../components/ui/input";
-import { Label } from "../../components/ui/label";
-import { Badge } from "../../components/ui/badge";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "../../components/ui/dialog";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "../../components/ui/alert-dialog";
-
-export const Route = createFileRoute("/_authenticated/employees")({
-  component: EmployeesPage,
-});
+import { companyApi, type Employee } from "../lib/api";
+import { PageHeader, GlassCard, EmptyState } from "../components/dashboard-ui";
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
+import { Label } from "../components/ui/label";
+import { Badge } from "../components/ui/badge";
+import {
+  Dialog, DialogContent, DialogFooter,
+  DialogHeader, DialogTitle, DialogTrigger,
+} from "../components/ui/dialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel,
+  AlertDialogContent, AlertDialogDescription,
+  AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "../components/ui/alert-dialog";
 
 function EmployeeForm({
   initial,
@@ -67,7 +70,7 @@ function EmployeeForm({
   );
 }
 
-function EmployeesPage() {
+export default function EmployeesPage() {
   const qc = useQueryClient();
   const { data = [], isLoading } = useQuery({
     queryKey: ["employees"],
@@ -78,8 +81,7 @@ function EmployeesPage() {
   const [deleting, setDeleting] = useState<Employee | null>(null);
 
   const createMut = useMutation({
-    mutationFn: (payload: { name: string; jobTitle: string; department: string; pin: string }) =>
-      companyApi.createEmployee(payload),
+    mutationFn: (payload: any) => companyApi.createEmployee(payload),
     onSuccess: () => {
       toast.success("Employee added");
       qc.invalidateQueries({ queryKey: ["employees"] });
@@ -121,7 +123,11 @@ function EmployeesPage() {
             </DialogTrigger>
             <DialogContent>
               <DialogHeader><DialogTitle>Add employee</DialogTitle></DialogHeader>
-              <EmployeeForm onSubmit={(v) => createMut.mutate(v)} submitting={createMut.isPending} submitLabel="Add employee" />
+              <EmployeeForm
+                onSubmit={(v) => createMut.mutate(v)}
+                submitting={createMut.isPending}
+                submitLabel="Add employee"
+              />
             </DialogContent>
           </Dialog>
         }
@@ -136,7 +142,7 @@ function EmployeesPage() {
           <div className="divide-y divide-border/60">
             {data.map((emp: Employee) => (
               <div key={emp._id} className="flex flex-wrap items-center justify-between gap-3 py-3">
-                <Link to="/employees/$id" params={{ id: emp._id }} className="group min-w-0 flex-1">
+                <Link to={`/employees/${emp._id}`} className="group min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     <span className="truncate font-medium group-hover:text-primary">{emp.name}</span>
                     {emp.isActive === false && <Badge variant="secondary">Inactive</Badge>}
@@ -153,7 +159,7 @@ function EmployeesPage() {
                     <Trash2 className="h-4 w-4" />
                   </Button>
                   <Button asChild variant="ghost" size="icon">
-                    <Link to="/employees/$id" params={{ id: emp._id }}>
+                    <Link to={`/employees/${emp._id}`}>
                       <ArrowRight className="h-4 w-4" />
                     </Link>
                   </Button>

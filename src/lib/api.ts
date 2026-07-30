@@ -187,8 +187,7 @@ export async function api<T = unknown>(
       ...(init.headers as Record<string, string> || {}),
     };
   }
-  return (companyApi as any).request<T>(path, options);
-}
+return (companyApi as any).request(path, options) as T;}
 
 // Domain types
 export interface Employee {

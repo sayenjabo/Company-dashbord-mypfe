@@ -1,45 +1,37 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { Toaster } from "@/components/ui/toaster";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { AuthProvider } from "@/hooks/useAuth";
-import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { Toaster } from "./components/ui/sonner";
+import { AuthProvider } from "./lib/auth";
+import { ProtectedRoute } from "./components/ProtectedRoute";
+import CompanyLayout from "./components/CompanyLayout";
 import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
-import CompaniesPage from "./pages/CompaniesPage";
-import TrainingsPage from "./pages/TrainingsPage";
-import SessionsPage from "./pages/SessionsPage";
-import StatisticsPage from "./pages/StatisticsPage";
+import EmployeesPage from "./pages/EmployeesPage";
+import EmployeeDetailPage from "./pages/EmployeeDetailPage";
 import DevicesPage from "./pages/DevicesPage";
-import AdminLayout from "./components/AdminLayout";
-import NotFound from "./pages/NotFound";
+import SessionsPage from "./pages/SessionsPage";
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
+export default function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <AuthProvider>
           <Routes>
+            <Route path="/login" element={<LoginPage />} />
             <Route path="/" element={<LoginPage />} />
-            <Route element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>
+            <Route element={<ProtectedRoute><CompanyLayout /></ProtectedRoute>}>
               <Route path="/dashboard" element={<DashboardPage />} />
-              <Route path="/companies" element={<CompaniesPage />} />
-              <Route path="/trainings" element={<TrainingsPage />} />
-              <Route path="/sessions" element={<SessionsPage />} />
+              <Route path="/employees" element={<EmployeesPage />} />
+              <Route path="/employees/:id" element={<EmployeeDetailPage />} />
               <Route path="/devices" element={<DevicesPage />} />
-              <Route path="/statistics" element={<StatisticsPage />} />
+              <Route path="/sessions" element={<SessionsPage />} />
             </Route>
-            <Route path="*" element={<NotFound />} />
           </Routes>
+          <Toaster richColors position="top-right" theme="dark" />
         </AuthProvider>
       </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
-
-export default App;
+    </QueryClientProvider>
+  );
+}

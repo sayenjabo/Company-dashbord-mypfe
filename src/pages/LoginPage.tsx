@@ -1,60 +1,98 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { motion } from "framer-motion";
-import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { Loader2, Sparkles } from "lucide-react";
+import { useAuth } from "../lib/auth";
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
+import { Label } from "../components/ui/label";
 
 export default function LoginPage() {
+  const { login, isAuthenticated } = useAuth();
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
-  const { login, isAuthenticated } = useAuth();
 
   if (isAuthenticated) {
     navigate("/dashboard", { replace: true });
     return null;
   }
 
-  const handleLogin = async (e: React.FormEvent) => {
+  async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     try {
       await login(email, password);
-      navigate("/dashboard");
-    } catch (err: any) {
-      toast.error(err.message || "Login failed");
+      navigate("/dashboard", { replace: true });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Login failed");
     } finally {
       setLoading(false);
     }
-  };
+  }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background px-4">
+      <div className="pointer-events-none absolute inset-0 opacity-70">
+        <div className="absolute -top-32 -left-32 h-96 w-96 rounded-full bg-primary/20 blur-3xl" />
+        <div className="absolute -bottom-32 -right-32 h-96 w-96 rounded-full bg-primary/10 blur-3xl" />
+      </div>
+
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="glass-card p-8 w-full max-w-md glow-primary"
+        className="glass-card relative z-10 w-full max-w-md rounded-2xl p-8"
       >
-        <div className="text-center mb-8">
-          <h1 className="font-heading text-3xl font-bold text-primary tracking-tight">Tynass</h1>
-          <p className="text-muted-foreground text-sm mt-1">Admin Panel</p>
+        <div className="mb-8 flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+            <Sparkles className="h-5 w-5" />
+          </div>
+          <div>
+            <div className="text-xl font-bold">Tynass</div>
+            <div className="text-xs text-muted-foreground">Company Dashboard</div>
+          </div>
         </div>
 
-        <form onSubmit={handleLogin} className="space-y-5">
+        <h1 className="mb-1 text-2xl font-bold">Sign in</h1>
+        <p className="mb-6 text-sm text-muted-foreground">
+          Access your VR training analytics.
+        </p>
+
+        <form onSubmit={onSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" placeholder="admin@tynass.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
+            <Input
+              id="email"
+              type="email"
+              autoComplete="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@company.com"
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="password">Password</Label>
-            <Input id="password" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required />
+            <Input
+              id="password"
+              type="password"
+              autoComplete="current-password"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+            />
           </div>
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Signing in..." : "Sign In"}
+          <Button type="submit" disabled={loading} className="w-full" size="lg">
+            {loading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Signing in…
+              </>
+            ) : (
+              "Sign in"
+            )}
           </Button>
         </form>
       </motion.div>
