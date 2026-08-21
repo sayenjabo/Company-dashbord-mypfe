@@ -1,13 +1,8 @@
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import {
-  LayoutDashboard,
-  Users,
-  HardDrive,
-  Activity,
-  LogOut,
-  Menu,
-  Sparkles,
+  LayoutDashboard, Users, HardDrive,
+  Activity, LogOut, Menu, GraduationCap,
 } from "lucide-react";
 import { useAuth } from "../lib/auth";
 import { Button } from "./ui/button";
@@ -16,6 +11,7 @@ import { cn } from "../lib/utils";
 const nav = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/employees", label: "Employees", icon: Users },
+  { to: "/trainings", label: "Trainings", icon: GraduationCap },
   { to: "/devices", label: "Devices", icon: HardDrive },
   { to: "/sessions", label: "Sessions", icon: Activity },
 ];
@@ -38,15 +34,10 @@ export default function CompanyLayout() {
 
   return (
     <div className="flex min-h-screen bg-background">
-      {/* Mobile overlay */}
       {mobileOpen && (
-        <div
-          className="fixed inset-0 z-30 bg-black/50 md:hidden"
-          onClick={() => setMobileOpen(false)}
-        />
+        <div className="fixed inset-0 z-30 bg-black/50 md:hidden" onClick={() => setMobileOpen(false)} />
       )}
 
-      {/* Sidebar */}
       <aside
         className={cn(
           "fixed inset-y-0 left-0 z-40 flex flex-col border-r border-sidebar-border transition-all duration-300 md:static",
@@ -55,27 +46,23 @@ export default function CompanyLayout() {
         )}
         style={{ backgroundColor: "hsl(var(--sidebar-background))" }}
       >
-        {/* Logo */}
-        <div className="flex h-14 items-center border-b border-sidebar-border px-4">
-          <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-              <Sparkles className="h-4 w-4" />
-            </div>
-            {!collapsed && (
-              <div>
-                <div className="text-sm font-bold text-sidebar-foreground">Tynass</div>
-                <div className="text-xs text-muted-foreground truncate max-w-[140px]">
-                  {company?.companyName || "Company"}
-                </div>
-              </div>
-            )}
-          </div>
+        <div className="px-4 py-6">
+          {!collapsed && (
+            <h1 className="font-display text-xl font-bold text-primary tracking-tight">
+              Tynass
+              <span className="text-muted-foreground font-normal text-sm ml-1">
+                {(company as any)?.companyName || "Company"}
+              </span>
+            </h1>
+          )}
+          {collapsed && <span className="text-primary font-display font-bold text-lg">T</span>}
         </div>
 
-        {/* Nav */}
-        <nav className="flex-1 space-y-1 p-2 pt-4">
+        <nav className="flex-1 space-y-1 p-2">
           {nav.map(({ to, label, icon: Icon }) => {
-            const active = location.pathname === to;
+            const active =
+              location.pathname === to ||
+              (to === "/trainings" && location.pathname.startsWith("/trainings"));
             return (
               <Link
                 key={to}
@@ -83,7 +70,7 @@ export default function CompanyLayout() {
                 className={cn(
                   "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
                   active
-                    ? "bg-sidebar-accent text-primary"
+                    ? "bg-sidebar-accent text-primary font-medium"
                     : "text-sidebar-foreground hover:bg-sidebar-accent/50"
                 )}
               >
@@ -94,13 +81,7 @@ export default function CompanyLayout() {
           })}
         </nav>
 
-        {/* Footer */}
         <div className="border-t border-sidebar-border p-2">
-          {!collapsed && company?.companyName && (
-            <div className="px-3 py-2 text-xs text-muted-foreground truncate mb-1">
-              {company.companyName}
-            </div>
-          )}
           <button
             onClick={handleLogout}
             className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-destructive hover:bg-sidebar-accent/50"
@@ -111,23 +92,12 @@ export default function CompanyLayout() {
         </div>
       </aside>
 
-      {/* Main */}
       <div className="flex flex-1 flex-col min-w-0">
         <header className="flex h-14 items-center border-b border-border/50 px-4 gap-3">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="md:hidden"
-            onClick={() => setMobileOpen(true)}
-          >
+          <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setMobileOpen(true)}>
             <Menu className="h-5 w-5" />
           </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="hidden md:flex"
-            onClick={() => setCollapsed(!collapsed)}
-          >
+          <Button variant="ghost" size="icon" className="hidden md:flex" onClick={() => setCollapsed(!collapsed)}>
             <Menu className="h-5 w-5" />
           </Button>
         </header>
