@@ -38,7 +38,7 @@ export default function QuizPage() {
   });
 
   const training = trainings.find((t: any) => (t._id || t.id) === trainingId);
-  const hasQuiz = !!quiz && !quizLoading;
+  const hasQuiz = !!(quiz?.quiz ?? quiz) && !quizLoading;
 
   const [questions, setQuestions] = useState([emptyQuestion()]);
   const [passingScore, setPassingScore] = useState(70);
@@ -47,13 +47,14 @@ export default function QuizPage() {
   const [initialized, setInitialized] = useState(false);
 
   useEffect(() => {
-    if (quiz && !initialized) {
-      setQuestions(quiz.questions ?? [emptyQuestion()]);
-      setPassingScore(quiz.passingScore ?? 70);
-      setIsActive(quiz.isActive !== false);
-      setInitialized(true);
-    }
-  }, [quiz, initialized]);
+  if (quiz && !initialized) {
+    const quizData = quiz.quiz ?? quiz;
+    setQuestions(quizData.questions ?? [emptyQuestion()]);
+    setPassingScore(quizData.passingScore ?? 70);
+    setIsActive(quizData.isActive !== false);
+    setInitialized(true);
+  }
+}, [quiz, initialized]);
 
   const saveMut = useMutation({
     mutationFn: () => {
@@ -232,7 +233,7 @@ export default function QuizPage() {
                           placeholder={`Choix ${ci + 1}`}
                           className={q.correctIndex === ci ? "border-primary/50 bg-primary/5" : ""}
                         />
-                        {q.choices.length > 2 && (
+                        {q.choices.length > 1 && (
                           <Button
                             variant="ghost"
                             size="icon"
@@ -246,7 +247,7 @@ export default function QuizPage() {
                     ))}
                   </div>
 
-                  {q.choices.length < 5 && (
+                  {q.choices.length < 4 && (
                     <Button variant="ghost" size="sm" onClick={() => addChoice(qi)} className="text-muted-foreground">
                       <Plus className="h-3 w-3 mr-1" /> Add choice
                     </Button>
