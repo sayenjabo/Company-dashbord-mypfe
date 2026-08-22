@@ -86,11 +86,11 @@ class CompanyApiClient {
   }
 
   async createQuiz(trainingId: string, data: any) {
-    return this.request(`/api/company/trainings/${trainingId}/quiz`, {
-      method: "POST",
-      body: JSON.stringify(data),
-    });
-  }
+  return this.request(`/api/company/trainings/${trainingId}/quiz`, {
+    method: "POST",
+    body: JSON.stringify({ ...data, trainingId }),
+  });
+}
 
   async updateQuiz(trainingId: string, data: any) {
     return this.request(`/api/company/trainings/${trainingId}/quiz`, {
