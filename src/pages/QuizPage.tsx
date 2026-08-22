@@ -38,7 +38,8 @@ export default function QuizPage() {
   });
 
   const training = trainings.find((t: any) => (t._id || t.id) === trainingId);
-  const hasQuiz = !!(quiz?.quiz ?? quiz) && !quizLoading;
+  const quizData = quiz?.quiz ?? quiz;
+  const hasQuiz = !!quizData?.questions && !quizLoading;  
 
   const [questions, setQuestions] = useState([emptyQuestion()]);
   const [passingScore, setPassingScore] = useState(70);
@@ -137,7 +138,7 @@ export default function QuizPage() {
       <PageHeader
         title={`Quiz — ${training?.title || "Formation"}`}
         description={hasQuiz
-          ? `${quiz.questions?.length || 0} questions · Passing score : ${quiz.passingScore}%`
+          ? `${quizData.questions?.length || 0} questions · Passing score : ${quizData.passingScore}%`
           : "Aucun quiz pour cette formation"
         }
         actions={
@@ -233,7 +234,7 @@ export default function QuizPage() {
                           placeholder={`Choix ${ci + 1}`}
                           className={q.correctIndex === ci ? "border-primary/50 bg-primary/5" : ""}
                         />
-                        {q.choices.length > 1 && (
+                        {q.choices.length > 2 && (
                           <Button
                             variant="ghost"
                             size="icon"
