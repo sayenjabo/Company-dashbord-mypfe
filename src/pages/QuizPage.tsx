@@ -64,27 +64,25 @@ export default function QuizPage() {
         ? companyApi.updateQuiz(trainingId || "", payload)
         : companyApi.createQuiz(trainingId || "", payload);
     },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["quiz", trainingId] });
-      qc.invalidateQueries({ queryKey: ["companyTrainings"] });
-      setInitialized(false);
-      toast.success(hasQuiz ? "Quiz updated" : "Quiz created");
-    },
+   onSuccess: () => {
+  qc.invalidateQueries({ queryKey: ["quiz", trainingId] });
+  qc.invalidateQueries({ queryKey: ["companyTrainings"] });
+  toast.success(hasQuiz ? "Quiz updated" : "Quiz created");
+  },
     onError: (e: any) => toast.error(e.message || "Failed to save quiz"),
   });
 
   const deleteMut = useMutation({
     mutationFn: () => companyApi.deleteQuiz(trainingId || ""),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["quiz", trainingId] });
-      qc.invalidateQueries({ queryKey: ["companyTrainings"] });
-      setQuestions([emptyQuestion()]);
-      setPassingScore(70);
-      setIsActive(true);
-      setInitialized(false);
-      setDeleteOpen(false);
-      toast.success("Quiz deleted");
-    },
+  qc.invalidateQueries({ queryKey: ["quiz", trainingId] });
+  qc.invalidateQueries({ queryKey: ["companyTrainings"] });
+  setQuestions([emptyQuestion()]);
+  setPassingScore(70);
+  setIsActive(true);
+  setDeleteOpen(false);
+  toast.success("Quiz deleted");
+},
     onError: (e: any) => toast.error(e.message || "Failed to delete quiz"),
   });
 
