@@ -72,12 +72,12 @@ function MilestoneForm({
               </SelectItem>
             ))}
             {trainings.length === 0 && (
-              <SelectItem value="" disabled>Aucune formation disponible</SelectItem>
+              <SelectItem value="_none" disabled>Aucune formation disponible</SelectItem>
             )}
           </SelectContent>
         </Select>
         <p className="text-xs text-muted-foreground">
-          La valeur est le titre exact de la formation pour l'auto-complétion du milestone
+          Titre exact de la formation pour l'auto-complétion du milestone
         </p>
       </div>
       <DialogFooter>
@@ -103,14 +103,14 @@ export default function EmployeeDetailPage() {
     enabled: !!id,
   });
 
-  // Load company trainings for the module select
   const { data: trainings = [] } = useQuery({
     queryKey: ["companyTrainings"],
     queryFn: () => companyApi.getMyTrainings(),
   });
 
   const [createOpen, setCreateOpen] = useState(false);
-  const [editing, setEditing] = useState<Milestone | null>(null);
+  const [editing, setEditing] = useState<any | null>(null);
+  const [editStatus, setEditStatus] = useState("pending");
   const [deleting, setDeleting] = useState<Milestone | null>(null);
 
   const createMut = useMutation({
@@ -119,6 +119,17 @@ export default function EmployeeDetailPage() {
       toast.success("Milestone added");
       qc.invalidateQueries({ queryKey: ["milestones", id] });
       setCreateOpen(false);
+    },
+    onError: (e: any) => toast.error(e.message || "Failed"),
+  });
+
+  const updateMut = useMutation({
+    mutationFn: ({ milestoneId, data }: { milestoneId: string; data: any }) =>
+      companyApi.updateMilestone(id!, milestoneId, data),
+    onSuccess: () => {
+      toast.success("Milestone updated");
+      qc.invalidateQueries({ queryKey: ["milestones", id] });
+      setEditing(null);
     },
     onError: (e: any) => toast.error(e.message || "Failed"),
   });
@@ -132,6 +143,11 @@ export default function EmployeeDetailPage() {
     },
     onError: (e: any) => toast.error(e.message || "Failed"),
   });
+
+  const openEdit = (m: any) => {
+    setEditing(m);
+    setEditStatus(m.status || "pending");
+  };
 
   return (
     <div>
@@ -178,14 +194,14 @@ export default function EmployeeDetailPage() {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     <div className="truncate font-medium">{m.title || "—"}</div>
-                    {m.status && <Badge variant="secondary">{m.status}</Badge>}
+                    {m.status && <Badge variant={m.status === "completed" ? "default" : "secondary"}>{m.status}</Badge>}
                     {m.type && <Badge variant="outline">{m.type}</Badge>}
                   </div>
                   {m.description && <div className="text-xs text-muted-foreground">{m.description}</div>}
                   {m.module && <div className="text-xs text-muted-foreground">Formation: {m.module}</div>}
                 </div>
                 <div className="flex items-center gap-1">
-                  <Button variant="ghost" size="icon" onClick={() => setEditing(m)}>
+                  <Button variant="ghost" size="icon" onClick={() => openEdit(m)}>
                     <Pencil className="h-4 w-4" />
                   </Button>
                   <Button variant="ghost" size="icon" onClick={() => setDeleting(m)}>
@@ -198,6 +214,43 @@ export default function EmployeeDetailPage() {
         )}
       </GlassCard>
 
+      {/* Edit Dialog */}
+      <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit milestone — {editing?.title}</DialogTitle>
+          </DialogHeader>
+          {editing && (
+            <div className="space-y-4 mt-2">
+              <div className="space-y-1 text-sm text-muted-foreground">
+                <div>Type : <span className="text-foreground">{editing.type || "—"}</span></div>
+                <div>Formation : <span className="text-foreground">{editing.module || "—"}</span></div>
+              </div>
+              <div className="space-y-2">
+                <Label>Status</Label>
+                <Select value={editStatus} onValueChange={setEditStatus}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="completed">Completed</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <DialogFooter>
+                <Button
+                  onClick={() => updateMut.mutate({ milestoneId: editing._id, data: { status: editStatus } })}
+                  disabled={updateMut.isPending}
+                  className="w-full"
+                >
+                  {updateMut.isPending ? "Saving…" : "Save Changes"}
+                </Button>
+              </DialogFooter>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation */}
       <AlertDialog open={!!deleting} onOpenChange={(o) => !o && setDeleting(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
