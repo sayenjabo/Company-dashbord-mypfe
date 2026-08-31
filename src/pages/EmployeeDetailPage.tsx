@@ -24,10 +24,12 @@ import {
 } from "../components/ui/select";
 
 function MilestoneForm({
+  trainings,
   onSubmit,
   submitting,
   submitLabel,
 }: {
+  trainings: any[];
   onSubmit: (data: { title: string; type: string; description: string; module: string }) => void;
   submitting: boolean;
   submitLabel: string;
@@ -58,8 +60,25 @@ function MilestoneForm({
         <Input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Optional description" />
       </div>
       <div className="space-y-2">
-        <Label>Module / Scene</Label>
-        <Input value={module} onChange={(e) => setModule(e.target.value)} placeholder="FireEvacuationScene" className="font-mono" />
+        <Label>Module / Formation</Label>
+        <Select value={module} onValueChange={setModule}>
+          <SelectTrigger>
+            <SelectValue placeholder="Sélectionner une formation" />
+          </SelectTrigger>
+          <SelectContent>
+            {trainings.map((t: any) => (
+              <SelectItem key={t._id || t.id} value={t.title}>
+                {t.title}
+              </SelectItem>
+            ))}
+            {trainings.length === 0 && (
+              <SelectItem value="" disabled>Aucune formation disponible</SelectItem>
+            )}
+          </SelectContent>
+        </Select>
+        <p className="text-xs text-muted-foreground">
+          La valeur est le titre exact de la formation pour l'auto-complétion du milestone
+        </p>
       </div>
       <DialogFooter>
         <Button type="submit" disabled={submitting}>{submitting ? "Saving…" : submitLabel}</Button>
@@ -82,6 +101,12 @@ export default function EmployeeDetailPage() {
     queryKey: ["milestones", id],
     queryFn: () => companyApi.getMilestones(id!),
     enabled: !!id,
+  });
+
+  // Load company trainings for the module select
+  const { data: trainings = [] } = useQuery({
+    queryKey: ["companyTrainings"],
+    queryFn: () => companyApi.getMyTrainings(),
   });
 
   const [createOpen, setCreateOpen] = useState(false);
@@ -132,6 +157,7 @@ export default function EmployeeDetailPage() {
           <DialogContent>
             <DialogHeader><DialogTitle>Add milestone</DialogTitle></DialogHeader>
             <MilestoneForm
+              trainings={trainings}
               onSubmit={(v) => createMut.mutate(v)}
               submitting={createMut.isPending}
               submitLabel="Add milestone"
@@ -156,7 +182,7 @@ export default function EmployeeDetailPage() {
                     {m.type && <Badge variant="outline">{m.type}</Badge>}
                   </div>
                   {m.description && <div className="text-xs text-muted-foreground">{m.description}</div>}
-                  {m.module && <div className="text-xs text-muted-foreground font-mono">Scene: {m.module}</div>}
+                  {m.module && <div className="text-xs text-muted-foreground">Formation: {m.module}</div>}
                 </div>
                 <div className="flex items-center gap-1">
                   <Button variant="ghost" size="icon" onClick={() => setEditing(m)}>
